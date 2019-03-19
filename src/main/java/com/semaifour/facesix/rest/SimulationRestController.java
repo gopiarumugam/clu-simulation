@@ -7,9 +7,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -357,15 +354,20 @@ public class SimulationRestController extends WebController {
 								BeaconDevice chosenDevice = deviceList.get(index);
 								String pixelResult = chosenDevice.getPixelresult();
 								devId = chosenDevice.getUid();
-								org.json.simple.JSONObject result = (org.json.simple.JSONObject) parse.parse(pixelResult);
-								org.json.simple.JSONArray latAndLon = (org.json.simple.JSONArray) result.get("result");
-
-								result = (org.json.simple.JSONObject) latAndLon.get(0);
-								lat = (String) result.get("latitude");
-								lon = (String) result.get("longitude");
 								
-								fromX = Double.valueOf(result.get("x").toString()); 
-								fromY = Double.valueOf(result.get("y").toString());
+								if (pixelResult != null) {
+									org.json.simple.JSONObject result = (org.json.simple.JSONObject) parse.parse(pixelResult);
+									org.json.simple.JSONArray latAndLon = (org.json.simple.JSONArray) result.get("result");
+
+									result = (org.json.simple.JSONObject) latAndLon.get(0);
+									lat = (String) result.get("latitude");
+									lon = (String) result.get("longitude");
+									
+									fromX = Double.valueOf(result.get("x").toString()); 
+									fromY = Double.valueOf(result.get("y").toString());
+								}
+								
+								
 								fromUid = devId;
 								from_dev = "{\"sid\":\""+sid+"\",\"spid\":\""+spid+"\",\"uid\":\""+fromUid+"\""
 										+ ",\"lat\":"+lat+",\"lon\":"+lon+",\"x\":"+fromX+",\"y\":"+fromY+"}";
@@ -394,15 +396,21 @@ public class SimulationRestController extends WebController {
 							sid = chosenDevice.getSid();
 							spid = chosenDevice.getSpid();
 							
-							org.json.simple.JSONObject result = (org.json.simple.JSONObject) parse.parse(pixelResult);
-							org.json.simple.JSONArray latAndLon = (org.json.simple.JSONArray) result.get("result");
-
-							result = (org.json.simple.JSONObject) latAndLon.get(0);
-							String tolat = (String) result.get("latitude");
-							String tolon = (String) result.get("longitude");
+							String tolat = "0.000000";
+							String tolon = "0.000000";
 							
-							toX = Double.valueOf(result.get("x").toString()); 
-							toY = Double.valueOf(result.get("y").toString());
+							if (pixelResult != null) {
+								org.json.simple.JSONObject result = (org.json.simple.JSONObject) parse.parse(pixelResult);
+								org.json.simple.JSONArray latAndLon = (org.json.simple.JSONArray) result.get("result");
+
+								result = (org.json.simple.JSONObject) latAndLon.get(0);
+								 tolat = (String) result.get("latitude");
+								 tolon = (String) result.get("longitude");
+								
+								toX = Double.valueOf(result.get("x").toString()); 
+								toY = Double.valueOf(result.get("y").toString());
+							}
+							
 							toUid = devId;
 							to_dev = "{\"sid\":\""+sid+"\",\"spid\":\""+spid+"\",\"uid\":\""+toUid+"\""
 									+ ",\"lat\":"+tolat+",\"lon\":"+tolon+",\"x\":"+toX+",\"y\":"+toY+"}";
@@ -433,24 +441,29 @@ public class SimulationRestController extends WebController {
 							// use exiting values , remove points from the list
 							String todev = associatedBeacon.getTo_dev();
 							JSONParser parser = new JSONParser();
-							org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(todev);
-							List<String> latLonList = associatedBeacon.getLatlonList();
-							String latlon = latLonList.remove(0);
-							associatedBeacon.setLatlonList(latLonList);
-							String[] latLon = latlon.split(",");
-							lat = latLon[0];
-							lon = latLon[1];
-							String jsonlat = json.get("lat").toString();
-							String jsonlon = json.get("lon").toString();
-							if(jsonlat.equals(lat) && jsonlon.equals(lon)) {
-								devId = json.get("uid").toString();
-								sid = json.get("sid").toString();
-								spid = json.get("spid").toString();
-							} else {
-								devId = associatedBeacon.getUid();
-								sid = associatedBeacon.getSid();
-								spid = associatedBeacon.getSpid();
+							if (todev != null) {
+								org.json.simple.JSONObject json = (org.json.simple.JSONObject) parser.parse(todev);
+								List<String> latLonList = associatedBeacon.getLatlonList();
+								String latlon = latLonList.remove(0);
+								associatedBeacon.setLatlonList(latLonList);
+								String[] latLon = latlon.split(",");
+								lat = latLon[0];
+								lon = latLon[1];
+								
+								String jsonlat = json.get("lat").toString();
+								String jsonlon = json.get("lon").toString();
+								if(jsonlat.equals(lat) && jsonlon.equals(lon)) {
+									devId = json.get("uid").toString();
+									sid = json.get("sid").toString();
+									spid = json.get("spid").toString();
+								} else {
+									devId = associatedBeacon.getUid();
+									sid = associatedBeacon.getSid();
+									spid = associatedBeacon.getSpid();
+								}
 							}
+							
+							
 						}
 						
 					}  else {

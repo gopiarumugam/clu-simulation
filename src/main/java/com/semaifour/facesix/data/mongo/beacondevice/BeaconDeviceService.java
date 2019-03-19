@@ -145,8 +145,9 @@ public class BeaconDeviceService {
 		device = repository.save(device);
 		if (device.getPkid() == null) {
 			device.setPkid(device.getId());
-			device = repository.save(device);
 		}
+		device = repository.save(device);
+		
 	    LOG.info(" Beacon Device saved successfully :" + device.getId());
 		return device;
 	}

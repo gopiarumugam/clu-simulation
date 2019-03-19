@@ -169,9 +169,10 @@ public class BeaconService {
 		// LOG.info("Beacon saved successfully " +beacon.getMacaddr());
 		if (beacon.getPkid() == null) {
 			beacon.setPkid(beacon.getId());
-			beacon = repository.save(beacon);
 		}
 
+		beacon = repository.save(beacon);
+		
 		if (notify) {
 			notify(beacon, "tag-update");
 		}
