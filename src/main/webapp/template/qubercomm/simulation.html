@@ -1,0 +1,173 @@
+
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.16.0/jquery.validate.min.js"></script>
+<!------ Include the above in your HEAD tag ---------->
+<!DOCTYPE link PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<div style="margin-left: 20%;margin-top: 1%">
+ 		<button class="btn navbar-btn navbar-right"><a href="/simulate/goodbye">Log-out</a></button>
+</div>
+
+	<div class="container register-form" style="margin-top: 2%">
+	<div class="form">
+	
+		<div class="note">
+			<p>Qubercomm Locatum Simulation Tool</p>
+		</div>
+
+			<div class="messages"></div>
+
+			<div class="form-content">
+				<div class="row">
+
+					<div class="col-md-6">
+						<div class="form-group">
+							<label for="customername">Customer Name:</label> <select
+								class="form-control" name="customername" id="customername"></select>
+						</div>
+						<div class="form-group">
+							<label for="deviceCount">Gateway Count</label> <input type="text"
+								class="form-control" placeholder="Enter Device Count *"
+								id="deviceCount" name="deviceCount" onkeypress="return isNumber(event)" value="1"/>
+						</div>
+					</div>
+
+
+					<div class="col-md-6">
+						<div class="form-group">
+							<label for="simulateVia">Simulation Via</label> <select
+								class="form-control sideStyle" id="simulateVia"
+								name="simulateVia">
+								<option value="mqtt">MQTT</option>
+								<option value="rest">Rest</option>
+							</select>
+						</div>
+						<div class="form-group">
+							<label for="tagCount">Tag Count:</label> <input type="text"
+								class="form-control" placeholder="Enter Tag Count *"
+								id="tagCount" name="tagCount"
+								onkeypress="return isNumber(event)" value="1" />
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="form-group">
+							<label for="maxCount">Split Size Of Tag Count:</label> <input type="text"
+								class="form-control" placeholder="Enter Max Tag Count *"
+								id="maxCount" name="maxCount"
+								onkeypress="return isNumber(event)" value="1"/>
+						</div>
+					</div>
+				</div>
+				<button type="button" class="btn btn-primary btn-lg submitBtn-simulation" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Processing Order" name="submitBtn" id="load">Submit</button>
+			</div>
+	</div>
+</div>
+        
+        
+ <style>
+    .note
+{
+    text-align: center;
+    height: 80px;
+    background: -webkit-linear-gradient(left, #0072ff, #8811c5);
+    color: #fff;
+    font-weight: bold;
+    line-height: 80px;
+}
+.form-content
+{
+    padding: 5%;
+    border: 1px solid #ced4da;
+    margin-bottom: 2%;
+}
+.form-control{
+    border-radius:1.5rem;
+}
+.btnSubmit
+{
+    border:none;
+    border-radius:1.5rem;
+    padding: 1%;
+    width: 20%;
+    cursor: pointer;
+    background: #0062cc;
+    color: #fff;
+}
+    </style>
+
+ <script>
+ 
+ function isNumber(evt) {
+     evt = (evt) ? evt : window.event;
+     var charCode = (evt.which) ? evt.which : evt.keyCode;
+     if ( (charCode > 31 && charCode < 48) || charCode > 57) {
+         return false;
+     }
+     return true;
+ }
+ 
+$(document).ready(function() {
+	
+	$.ajax({
+		type : "GET",
+		url : '/simulate/rest/customer/list',
+		dataType : "json",
+		success : function(data) {
+			if(data.customer.length > 0){
+				$.each(data.customer, function(i, obj) {
+					var div_data = "<option value=" + obj.id + ">"+ obj.customerName + "</option>";
+					$(div_data).appendTo('#customername');
+				});
+			} else {
+				var div_data = "<option value='' disabled selected>No customer available</option>";
+				$(div_data).appendTo('#customername');
+			}
+		}
+	});
+	
+	$('.submitBtn-simulation').on('click', function(e){
+
+	        var cid 		= $("#customername").val();
+	        var deviceCount = $('#deviceCount').val();
+	        var simulateVia = $('#simulateVia').val();
+	        var tagCount    = $('#tagCount').val();
+	        var maxCount    = $('#maxCount').val();
+	        
+    		e.isDefaultPrevented();
+    			 
+    	      var messageAlert = "alert-success";
+    	      var messageText = "Simulation statred sucess.";
+
+    	      var data = {
+   	    		  cid : cid,
+   	    		  deviceCount : deviceCount,
+   	    		  simulateVia : simulateVia,
+   	    		  tagCount : tagCount,
+   	    		  maxCount : maxCount
+    	      }
+    	      
+    	    	  $.ajax({
+    	    	      url: '/simulate/rest/simulation/simulateTagDetails',
+    	    	      type: 'GET',
+    	    	      data : data,
+    	    	      success: function(response) {
+    	    	        console.log('response.' + response);
+    	    	        if(response == true){
+    	    	        	alert("simulation success !!!");
+    	    	        } else {
+    	    	        	alert("simulation Failure !!!");
+    	    	        }
+    	    	      }, error: function (error) {
+    	    	    	  alert("simulation Failure !!!");
+    	    	      }
+    	    	    });
+    	    	 
+
+    	      return false;
+    	  });
+
+   
+});
+ </script>
