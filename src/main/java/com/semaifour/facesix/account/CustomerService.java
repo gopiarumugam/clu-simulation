@@ -51,8 +51,8 @@ public class CustomerService {
 		customer = repository.save(customer);
 		if (customer.getPkid() == null) {
 			customer.setPkid(customer.getId());
-			customer = repository.save(customer);
 		}
+		customer = repository.save(customer);
 		return customer;
 	}
 

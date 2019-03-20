@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-
 import org.json.simple.parser.JSONParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.semaifour.facesix.account.Customer;
 import com.semaifour.facesix.account.CustomerService;
 import com.semaifour.facesix.beacon.data.Beacon;
@@ -26,9 +24,7 @@ import com.semaifour.facesix.data.site.Portion;
 import com.semaifour.facesix.data.site.PortionService;
 import com.semaifour.facesix.simulatedBeacon.BeaconAssociation;
 import com.semaifour.facesix.simulatedBeacon.BeaconAssociationService;
-import com.semaifour.facesix.util.CustomerUtils;
 import com.semaifour.facesix.web.WebController;
-
 import net.sf.json.JSONObject;
 
 @RestController
@@ -39,9 +35,6 @@ public class SimulationRestController extends WebController {
 	
 	@Autowired
 	private BeaconDeviceService beaconDeviceService;
-	
-	@Autowired
-	private CustomerUtils customerUtils;
 	
 	@Autowired
 	private BeaconAssociationService beaconAssociationService;
@@ -91,6 +84,11 @@ public class SimulationRestController extends WebController {
 			Customer customer = customerService.findById(cid);
 
 			if (customer != null) {
+				customer.setThreshold(String.valueOf(maxCount));
+				customer.setSimulationStatus("true");
+				customer.setSimulationVia(simulateVia);
+				customerService.save(customer, false);
+				
 				this.simulateTags(cid, tagCount);
 				this.simulateDevices(cid, deviceCount);
 				this.associationTagsForCustomer(customer);

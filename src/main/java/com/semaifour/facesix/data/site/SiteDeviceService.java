@@ -81,9 +81,9 @@ public class SiteDeviceService {
 		fsobject = repository.save(fsobject);
 		if (fsobject.getPkid() == null) {
 			fsobject.setPkid(fsobject.getId());
-			fsobject = repository.save(fsobject);
 		}
-		LOG.info("Saved successfully :" + fsobject.getUid());
+		fsobject = repository.save(fsobject);
+		LOG.info("SiteDevice Saved successfully :" + fsobject.getUid());
 		return fsobject;
 	}
 

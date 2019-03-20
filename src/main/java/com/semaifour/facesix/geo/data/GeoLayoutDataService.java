@@ -38,8 +38,8 @@ public class GeoLayoutDataService {
 		fsobject = repository.save(fsobject);
 		if (fsobject.getPkid() == null) {
 			fsobject.setPkid(fsobject.getId());
-			fsobject = repository.save(fsobject);
 		}
+		fsobject = repository.save(fsobject);
 		return fsobject;
 	}
 }

@@ -10,12 +10,10 @@ import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -50,51 +48,49 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 	private static final long serialVersionUID = 5071601145810944146L;
 
 	@Autowired
-	CustomerService customerService;
+	private CustomerService customerService;
 	
 	@Autowired
-	PortionService portionService;
+	private PortionService portionService;
 	
 	@Autowired
-	BeaconDeviceService beaconDeviceService;
+	private BeaconDeviceService beaconDeviceService;
 	
 	@Autowired
-	BeaconService beaconService;
+	private BeaconService beaconService;
 	
 	@Autowired
-	DeviceEventPublisher mqttPublisher;
+	private DeviceEventPublisher mqttPublisher;
 	
 	@Autowired
-	BeaconAssociationService beaconAssociationService;
+	private BeaconAssociationService beaconAssociationService;
 	
 	@Autowired
-	CustomerUtils customerUtils;
+	private CustomerUtils customerUtils;
 	
 	
 	@Value("${facesix.simulationScheduledTask.enable}")
 	private boolean simulation_enable;
 	
 	public final String classname = simulationScheduledTask.class.getName();
-	Logger LOG = LoggerFactory.getLogger(classname);
-	public final String simulation = "enable";
-	public final String opcode = "current-location-update";
-	public final String cx_state = "ACTIVE";
-	DateFormat format =	new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-	public static int count = 0;
-	List<String> solution = Arrays.asList("GatewayFinder", "GeoFinder");
 	
-	String mqttMsgTemplate = "\"opcode\":\"{0}\", \"uid\":\"{1}\",\"spid\":\"{2}\""
+	private Logger LOG = LoggerFactory.getLogger(classname);
+	
+	private final String opcode 		= "current-location-update";
+	private DateFormat format =	new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+	
+	private String mqttMsgTemplate = "\"opcode\":\"{0}\", \"uid\":\"{1}\",\"spid\":\"{2}\""
 						   + ",\"tag_count\":{3}, \"record_num\":{4},\"max_record\":{5},"
 						   + "\"tag_list\":{6},\"server_send_ts\":\"{7}\"";
 
 
 	ForkJoinPool forkJoinPool = null;
 	
-	boolean logenabled = false;
-	String spid = null;
-	String simulateVia = "mqtt";
-	int threshold = 50;
-	TimeZone timeZone = null;
+	private String simulateVia  = "mqtt";
+	private boolean logenabled 	= false;
+	private String spid 		= null;
+	private int threshold 		= 50;
+	private TimeZone timeZone 	= null;
 	
 	private void setSpid (String spid) {
 		this.spid = spid;
@@ -115,87 +111,110 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 	private void setTimeZone(TimeZone timezone){
 		this.timeZone = timezone;
 	}
+
+	final static String customerId = "59b7c459db9a520e8f0858b7";
 	
-	//@Scheduled (fixedDelay=1000)
+	final static String simulation 	= "true";
+	final static String venueType 	= "Locatum";
+	final static String status 		= "ACTIVE";
+	
+	
+	@Scheduled (fixedDelay=1000)
 	public void simulationSchedule() throws InterruptedException {
 
 		if (!simulation_enable) {
 			 return;
 		}
 		
-		//List<Customer> customerList = getCustomerService().findBySimulationSolutionAndState(simulation,solution,cx_state);
-		List<Customer> customerList = customerService.findOneById("5a65cd7ddb9a525c12dd035e");
-		List<String> cidList = new ArrayList<String>();
-		Map<String,Boolean> enableLogs = new HashMap<String,Boolean>();
-		Map<String,String> simulationVia = new HashMap<String,String>();
-		Map<String,Integer> threshold = new HashMap<String,Integer>();
-		Map<String,TimeZone> timezone = new HashMap<String,TimeZone>();
-		String cid;
-		Boolean logs;
-		int num_of_forks =0;
-		List<simulationScheduledTask> recursiveTasks = new ArrayList<simulationScheduledTask>();
-		for (Customer cx : customerList) {
-			cid = cx.getId();
-			logs = cx.getLogs() == null || cx.getLogs().equals("false") ? false : true;
-			cidList.add(cx.getId());
-			enableLogs.put(cid, logs);
-			simulationVia.put(cid, cx.getSimulationVia());
-			threshold.put(cid, Integer.valueOf(cx.getThreshold()));
-			timezone.put(cid, customerUtils.FetchTimeZone(cx.getTimezone()));
-		}
-		
-		List<Portion> portionList = getPortionService().findByCids(cidList);
-		int i = 0;
-		forkJoinPool 	= new ForkJoinPool();
-		for (Portion p : portionList) {
-			simulationScheduledTask sst = new simulationScheduledTask();
-			cid = p.getCid();
-			sst.setSpid(p.getId());
-			sst.setlog(enableLogs.get(cid));
-			sst.setSimulationVia(simulationVia.get(cid));
-			sst.setTagThreshold(threshold.get(cid));
-			sst.setTimeZone(timezone.get(cid));
-			recursiveTasks.add(sst);
-			forkJoinPool.execute(sst);
-			i++;
-		}
-		num_of_forks = i;
-		i =0;
-		do {
-			if (recursiveTasks.get(i).isDone() 		          || 
-				recursiveTasks.get(i).isCancelled()           ||
-				recursiveTasks.get(i).isCompletedAbnormally() || 
-				recursiveTasks.get(i).isCompletedNormally()) {
-					//getCustomerUtils().logs(enablelog,classname,"Index Range> " + i);
-					i++;
-				}
-			if (i == num_of_forks) {
-				//getCustomerUtils().logs(enablelog,classname,"Index reaches Floor Count, Safe Exit" + i);
-				break;
-			}
-		} while (num_of_forks >= i);
-		
-		forkJoinPool.shutdownNow();
-		forkJoinPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
-	}
+		Customer customer = customerService.findById(customerId);
 
+		if (customer != null) {
+
+			int num_of_forks = 0;
+			
+				String simulationStatus = customer.getSimulationStatus() == null ? "false" : customer.getSimulationStatus();
+				String solution 	= customer.getVenueType();
+				String cxStatus     = customer.getStatus();
+				
+				if (simulation.equals(simulationStatus) && venueType.equals(solution) && status.equals(cxStatus)) {
+					
+					Map<String,Boolean> enableLogs 		= new HashMap<String,Boolean>();
+					Map<String,String> simulationVia 	= new HashMap<String,String>();
+					Map<String,Integer> threshold 		= new HashMap<String,Integer>();
+					Map<String,TimeZone> timezone 		= new HashMap<String,TimeZone>();
+					
+					List<simulationScheduledTask> recursiveTasks = new ArrayList<simulationScheduledTask>();
+					
+					String cid 	 = customer.getId();
+					Boolean logs = customer.getLogs() == null || customer.getLogs().equals("false") ? false : true;
+					
+					enableLogs.put(cid, logs);
+					simulationVia.put(cid, customer.getSimulationVia());
+					threshold.put(cid, Integer.valueOf(customer.getThreshold()));
+					timezone.put(cid, customerUtils.FetchTimeZone(customer.getTimezone()));
+					
+					List<Portion> portionList = getPortionService().findByCid(cid);
+	
+					if (portionList != null) {
+	
+						int i = 0;
+						forkJoinPool 	= new ForkJoinPool();
+						
+						for (Portion portion : portionList) {
+							simulationScheduledTask sst = new simulationScheduledTask();
+							sst.setSpid(portion.getId());
+							sst.setlog(enableLogs.get(cid));
+							sst.setSimulationVia(simulationVia.get(cid));
+							sst.setTagThreshold(threshold.get(cid));
+							sst.setTimeZone(timezone.get(cid));
+							recursiveTasks.add(sst);
+							forkJoinPool.execute(sst);
+							i++;
+						}
+						num_of_forks = i;
+						i =0;
+						do {
+							if (recursiveTasks.get(i).isDone() 		          || 
+								recursiveTasks.get(i).isCancelled()           ||
+								recursiveTasks.get(i).isCompletedAbnormally() || 
+								recursiveTasks.get(i).isCompletedNormally()) {
+									i++;
+								}
+							if (i == num_of_forks) {
+								break;
+							}
+						} while (num_of_forks >= i);
+						
+						forkJoinPool.shutdownNow();
+						forkJoinPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS);
+				} else {
+					LOG.info("Floor is not found...");
+				}
+			} else {
+				LOG.info("simulation disabled....");
+			}
+		}
+
+	}
+	
 	@Override
 	protected Integer compute() {
 		
-		String spid = this.spid;
-		boolean logenabled = this.logenabled;
-		String simulateVia = this.simulateVia;
-		int threshold = this.threshold;
+		String spid 		= this.spid;
+		boolean logenabled  = this.logenabled;
+		String simulateVia  = this.simulateVia;
+		int threshold 		= this.threshold;
 		format.setTimeZone(this.timeZone);
 		
 		List<BeaconAssociation> associatedBeaconList = getBeaconAssociationService().findBySpid(spid);
+		
 		if(associatedBeaconList == null || associatedBeaconList.size()==0){
 			return 0;
 		}
 		
 		int tagsInFloor = associatedBeaconList.size();
-		int max_record = tagsInFloor/threshold;
-		String uid = "E8:C7:4F:08:00:07";
+		int max_record  = tagsInFloor/threshold;
+		String uid 		= "E8:C7:4F:08:00:07";
 		
 		if (tagsInFloor % threshold > 0) {
 			max_record++;
@@ -204,13 +223,18 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 		int fromIndex = 0, toIndex = 0;
 		
 		for (int record_num = 1; record_num <= max_record; record_num++) {
+			
 			int tag_count = tagsInFloor - threshold > 0 ? threshold : tagsInFloor;
 			tagsInFloor -= threshold;
 			toIndex += tag_count;
+			
 			List<BeaconAssociation> subList = associatedBeaconList.subList(fromIndex, toIndex);
+			
 			fromIndex = toIndex;
+			
 			JSONArray tag_list = maketagList(subList);
 			JSONObject message = new JSONObject();
+			
 			message.put("opcode", opcode);
 			message.put("uid", uid);
 			message.put("spid", spid);
@@ -219,9 +243,11 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 			message.put("max_record", max_record);
 			message.put("tag_list", tag_list);
 			message.put("server_send_ts", format.format(new Date()));
-			//testing
+			
 			simulateVia = "mqtt";
+
 			switch (simulateVia) {
+			
 			case "mqtt":
 				String msg = MessageFormat.format(mqttMsgTemplate,
 						new Object[] { opcode, uid, spid, tag_count,
@@ -230,11 +256,11 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 				getMqttPublisher().publish("{"+msg+"}",spid);
 				break;
 			case "rest":
-				String inputLine = null;
+
 				byte[] postData = message.toString().getBytes(StandardCharsets.UTF_8);
 				int postDataLength = message.toString().length();
 
-				String url = "http://cloud.qubercomm.com/facesix/rest/locatum/test/clu";
+				String url = "http://locatum.qubercomm.com/facesix/rest/locatum/test/clu";
 
 				URL obj;
 				try {
@@ -253,7 +279,7 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 					
 					if (is != null) {
 						BufferedReader in 	= new BufferedReader( new InputStreamReader(is));
-						inputLine 	= in.readLine();
+						String inputLine 	= in.readLine();
 						in.close();							
 					}
 				} catch (Exception e) {
@@ -267,8 +293,9 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 	}
 	
 	private JSONArray maketagList(List<BeaconAssociation> subList) {
+		
 		JSONArray tag_list = new JSONArray();
-		Random rand = new Random();
+		
 		for (BeaconAssociation b : subList) {
 
 			JSONObject tagDetail = new JSONObject();
@@ -282,6 +309,7 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 			double range = 24.831335067749023;
 
 			String uid = b.getMacaddr();
+			
 			if(uid.equals("AC:23:3E:01:00:03")) {
 				Beacon beacon = getBeaconService().findOneByMacaddr("AC:23:3E:01:00:03");
 				if(System.currentTimeMillis() - beacon.getLastactive() < 180000) {
