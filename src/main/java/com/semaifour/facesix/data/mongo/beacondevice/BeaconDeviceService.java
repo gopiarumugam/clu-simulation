@@ -36,9 +36,6 @@ public class BeaconDeviceService {
 			+ " \"solution\":\"{8}\",\"tagthreshold\":\"{9}\", \"conf\":{10}, \"tunnelip\":\"{11}\"";
 
 	@Autowired
-	private BeaconService beaconService;
-
-	@Autowired
 	PortionService portionService;
 
 	public BeaconDeviceService() {
@@ -49,11 +46,11 @@ public class BeaconDeviceService {
 	}
 
 	public List<BeaconDevice> findByName(String name) {
-		return repository.findByName(QueryParser.escape(name));
+		return repository.findByName(name);
 	}
 
 	public List<BeaconDevice> findByUid(String uid) {
-		return repository.findByUid(QueryParser.escape(uid));
+		return repository.findByUid(uid);
 	}
 
 	public BeaconDevice findOneByName(String name) {
@@ -161,6 +158,6 @@ public class BeaconDeviceService {
 	
 
 	public BeaconDevice findByUidAndCidAndType(String uid, String cid, String deviceType) {
-		return repository.findByUidAndCidAndType(QueryParser.escape(uid), cid, deviceType);
+		return repository.findByUidAndCidAndType(uid, cid, deviceType);
 	}
 }
