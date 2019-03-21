@@ -85,13 +85,13 @@ public class SimulationRestController extends WebController {
 
 			if (customer != null) {
 				customer.setThreshold(String.valueOf(maxCount));
-				customer.setSimulationStatus("true");
-				customer.setSimulationVia(simulateVia);
 				customerService.save(customer, false);
 				
 				this.simulateTags(cid, tagCount);
 				this.simulateDevices(cid, deviceCount);
 				this.associationTagsForCustomer(customer);
+			} else {
+				result = false;
 			}
 			
 		} catch (Exception e) {
@@ -116,8 +116,6 @@ public class SimulationRestController extends WebController {
 		
 		Random rand = new Random(); 
 		
-		Beacon addBeacon = null;
-		
 		List<Beacon> alreadyAvailableTags = (List<Beacon>) beaconService.getSavedBeaconByCidAndStatus(cid, tagStatus);
 		int availableTagCount = alreadyAvailableTags.size();
 		
@@ -140,7 +138,7 @@ public class SimulationRestController extends WebController {
 			
 			String assignedTo = mac.replaceAll(":", "").toUpperCase();
 			
-			addBeacon = beaconService.checkout(mac, assignedTo, tagType, cid,
+			Beacon addBeacon = beaconService.checkout(mac, assignedTo, tagType, cid,
 									"qubertag", "1000", "4",tagModel, refTxpwr, scannerUid, "simulatedTag", null);
 			
 			stimulatedBeacons.add(addBeacon);

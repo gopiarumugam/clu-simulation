@@ -99,11 +99,6 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 	private void setlog (boolean log) {
 		this.logenabled = log;
 	}
-	
-	private void setSimulationVia(String simulation){
-		this.simulateVia = simulation;
-	}
-	
 	private void setTagThreshold(int threshold){
 		this.threshold = threshold;
 	}
@@ -139,7 +134,6 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 				if (simulation.equals(simulationStatus) && venueType.equals(solution) && status.equals(cxStatus)) {
 					
 					Map<String,Boolean> enableLogs 		= new HashMap<String,Boolean>();
-					Map<String,String> simulationVia 	= new HashMap<String,String>();
 					Map<String,Integer> threshold 		= new HashMap<String,Integer>();
 					Map<String,TimeZone> timezone 		= new HashMap<String,TimeZone>();
 					
@@ -149,7 +143,6 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 					Boolean logs = customer.getLogs() == null || customer.getLogs().equals("false") ? false : true;
 					
 					enableLogs.put(cid, logs);
-					simulationVia.put(cid, customer.getSimulationVia());
 					threshold.put(cid, Integer.valueOf(customer.getThreshold()));
 					timezone.put(cid, customerUtils.FetchTimeZone(customer.getTimezone()));
 					
@@ -164,7 +157,6 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 							simulationScheduledTask sst = new simulationScheduledTask();
 							sst.setSpid(portion.getId());
 							sst.setlog(enableLogs.get(cid));
-							sst.setSimulationVia(simulationVia.get(cid));
 							sst.setTagThreshold(threshold.get(cid));
 							sst.setTimeZone(timezone.get(cid));
 							recursiveTasks.add(sst);
@@ -202,7 +194,6 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 		
 		String spid 		= this.spid;
 		boolean logenabled  = this.logenabled;
-		String simulateVia  = this.simulateVia;
 		int threshold 		= this.threshold;
 		format.setTimeZone(this.timeZone);
 		
@@ -243,8 +234,6 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 			message.put("max_record", max_record);
 			message.put("tag_list", tag_list);
 			message.put("server_send_ts", format.format(new Date()));
-			
-			simulateVia = "mqtt";
 
 			switch (simulateVia) {
 			
@@ -255,7 +244,7 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 									  });
 				getMqttPublisher().publish("{"+msg+"}",spid);
 				break;
-			case "rest":
+			/*case "rest":
 
 				byte[] postData = message.toString().getBytes(StandardCharsets.UTF_8);
 				int postDataLength = message.toString().length();
@@ -285,6 +274,7 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
+				break;*/
 			default:
 				break;
 			}

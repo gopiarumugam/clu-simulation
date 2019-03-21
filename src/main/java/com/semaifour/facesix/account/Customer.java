@@ -75,7 +75,6 @@ public class Customer extends FSObject {
 	 * Simulation Details
 	 */
 	private String simulationStatus;
-	private String simulationVia;
 	
 	public Customer() {
 
@@ -569,14 +568,6 @@ public class Customer extends FSObject {
 		this.simulationStatus = simulationStatus;
 	}
 
-	public String getSimulationVia() {
-		return simulationVia;
-	}
-
-	public void setSimulationVia(String simulationVia) {
-		this.simulationVia = simulationVia;
-	}
-
 	@Override
 	public String toString() {
 		return "Customer [id=" + id + ", customerName=" + customerName + ", address=" + address + ", city=" + city
@@ -600,8 +591,9 @@ public class Customer extends FSObject {
 				+ ", batteryAlertCount=" + batteryAlertCount + ", deviceAlertCount=" + deviceAlertCount + ", vpn=" + vpn
 				+ ", custSupportEmailEnable=" + custSupportEmailEnable + ", custSupportEmailId=" + custSupportEmailId
 				+ ", custSupportPassword=" + custSupportPassword + ", custSupportHost=" + custSupportHost
-				+ ", custSupportPort=" + custSupportPort + ", simulationStatus=" + simulationStatus + ", simulationVia="
-				+ simulationVia + "]";
+				+ ", custSupportPort=" + custSupportPort + ", simulationStatus=" + simulationStatus + "]";
 	}
+
+	
 
 }
