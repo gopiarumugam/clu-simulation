@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.semaifour.facesix.webapp</groupId>
-	<artifactId>facesix-webapp</artifactId>
-	<version>0.1.0</version>
+	<artifactId>simulation</artifactId>
+	<version>1.0</version>
 
 	<properties>
 		<start-class>com.semaifour.facesix.boot.Application</start-class>
