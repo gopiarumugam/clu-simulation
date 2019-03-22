@@ -31,6 +31,7 @@ import com.semaifour.facesix.data.mongo.beacondevice.BeaconDeviceService;
 import com.semaifour.facesix.data.site.Portion;
 import com.semaifour.facesix.data.site.PortionService;
 import com.semaifour.facesix.mqtt.DeviceEventPublisher;
+import com.semaifour.facesix.rest.SimulationRestController;
 import com.semaifour.facesix.simulatedBeacon.BeaconAssociation;
 import com.semaifour.facesix.simulatedBeacon.BeaconAssociationService;
 import com.semaifour.facesix.util.CustomerUtils;
@@ -68,6 +69,8 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 	@Autowired
 	private CustomerUtils customerUtils;
 	
+	@Autowired
+	private SimulationRestController simulationRestController;
 	
 	@Value("${facesix.simulationScheduledTask.enable}")
 	private boolean simulation_enable;
@@ -114,6 +117,26 @@ public class simulationScheduledTask extends RecursiveTask<Integer> {
 	final static String status 		= "ACTIVE";
 	
 	
+	@Scheduled(fixedDelay = 30000)
+	public void BeaconAssociation() {
+
+		if (!simulation_enable) {
+			return;
+		}
+
+		Customer customer = customerService.findById(customerId);
+		if (customer != null) {
+			String simulationStatus = customer.getSimulationStatus() == null ? "false" : customer.getSimulationStatus();
+			String solution = customer.getVenueType();
+			String cxStatus = customer.getStatus();
+			if (simulation.equals(simulationStatus) && venueType.equals(solution) && status.equals(cxStatus)) {
+				simulationRestController.associationTagsForCustomer(customer);
+			}
+
+		}
+
+	}
+
 	@Scheduled (fixedDelay=1000)
 	public void simulationSchedule() throws InterruptedException {
 

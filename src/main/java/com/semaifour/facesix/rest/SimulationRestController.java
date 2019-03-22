@@ -54,7 +54,7 @@ public class SimulationRestController extends WebController {
 	DecimalFormat dformat 		   = new DecimalFormat("00000000");
 	final static String parent     = "ble";
 	final static String macDef 	   = "TEST";
-	final static String tagType    = "Female";
+	final static List<String> TAG_TYPE    = Arrays.asList("Contractor","Employee","Visitor");
 	final static String tagModel   = "neck";
 	final static String refTxpwr   = "-59";
 	final static String scannerUid = "00:00:00:00:00:00";
@@ -138,6 +138,10 @@ public class SimulationRestController extends WebController {
 			
 			String assignedTo = mac.replaceAll(":", "").toUpperCase();
 			
+			Random tagTypeRand = new Random();
+			int tagTypeindex   = tagTypeRand.nextInt(TAG_TYPE.size());
+			String tagType     = TAG_TYPE.get(tagTypeindex);
+					
 			Beacon addBeacon = beaconService.checkout(mac, assignedTo, tagType, cid,
 									"qubertag", "1000", "4",tagModel, refTxpwr, scannerUid, "simulatedTag", null);
 			
